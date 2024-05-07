@@ -1,16 +1,55 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"strconv"
+)
+
+const fileName = "balance.txt"
 
 type Bank struct {
 	balance float64
 }
 
-func initializeBank() *Bank {
-	return &Bank{balance: 0.0}
+func handleError(err error) int {
+	if err != nil {
+		fmt.Println(err)
+		return 1
+	}
+	return 0
+}
+
+func getBalancefromFile() float64 {
+
+	data, fileError := os.ReadFile(fileName)
+	b := handleError(fileError)
+	if b == 1 {
+		return 1000
+	}
+
+	balanceText := string(data)
+	balance, floatError := strconv.ParseFloat(balanceText, 64)
+	handleError(floatError)
+
+	return balance
+}
+
+func writeBalanceToFile(balance float64) {
+	balanceText := fmt.Sprint(balance)
+	os.WriteFile(fileName, []byte(balanceText), 0644)
+}
+
+func initializeBank(params ...float64) *Bank {
+	var balance float64 = 0
+	if params[0] > 0 {
+		balance = params[0]
+	}
+	return &Bank{balance: balance}
 }
 func main() {
-	bank := initializeBank()
+	balance := getBalancefromFile()
+	bank := initializeBank(balance)
 	handleBankOperations(bank)
 }
 
@@ -28,10 +67,12 @@ func inputAndValidateAmount(text string) float64 {
 }
 func depositMoney(bank *Bank) {
 	bank.balance += inputAndValidateAmount("Deposit a valid amount: ")
+	writeBalanceToFile(bank.balance)
 }
 
 func withdrawMoney(bank *Bank) {
 	bank.balance -= inputAndValidateAmount("Withdraw a valid amount: ")
+	writeBalanceToFile(bank.balance)
 }
 
 func displayMenu(userChoice *uint) {
